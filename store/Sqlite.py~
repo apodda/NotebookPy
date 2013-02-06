@@ -1,0 +1,59 @@
+import sqlite3
+from Utils import parse_title
+
+class SqliteStore():
+
+    def __init__(self, path):
+        """Costructor, takes path to an existing database. If it doesn't exist,
+           sqlite will create it for us. Will create a table called 'notes' if
+           it doesn't exist. The table will use fts4 fulltext search to speed
+           up searches
+        
+           Parameters
+           ----------
+           path: str
+                 Path to database. Might take ':memory:' to create a database in memory.
+        """
+        self.db = sqlite3.connect(path)
+        self.db.execute("CREATE VIRTUAL TABLE IF NOT EXISTS notes USING fts4(title, body, id)")
+        
+    def import_folder(self, path): # FIXME Should be an util
+        """Imports files from a directory and adds them to db. Does not recurse. Expects
+           plain text files. Will automatically parse the title.
+        
+        Parameters
+        ----------
+        path: str
+              Path to directory
+        """
+        pass
+        
+    def update_note(self, text, uid):
+        """Update note based on uid. Parses title from text.
+        
+        Parameters
+        ----------
+        text: str
+              The text of the note, to be updated in db
+        uid: str
+             Unique id of the note
+        """
+        # FIXME Maybe we should raise an exception when uid is null
+        self.db.execute("UPDATE notes SET body=? WHERE id=?", [text, uid]) 
+        self.db.execute("UPDATE notes SET title=? WHERE id=?", [parse_title(text), uid])
+    
+    def query(self, query):
+        """Takes a query in extended query syntax, returns a list of titles and UUIDs
+        
+        Parameters
+        ----------
+        query: str
+        """
+        if query is not '': # cursor.execute expects a list!
+            return [[title, uid] for title, uid 
+                in self.db.execute("SELECT title, id FROM notes WHERE body MATCH ?", [query])]
+        else:
+            return [[title, uid] for title, uid 
+                in db.execute("SELECT title, id FROM notes", [query])]
+
+

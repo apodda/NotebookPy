@@ -1,0 +1,52 @@
+from gi.repository import Gtk
+
+class Handler:
+    def on_main_window_delete_event(self, *args):
+        Gtk.main_quit(*args)
+        
+    def on_current_note_buffer_changed(self, notebuffer):
+        """ Callback called when text in the main buffer is changed. This
+            means it gets called also when switching notes.
+        """
+    
+    def on_treeview_notelist_selection_changed(self, selection):
+        pass
+        
+    def search_buffer_inserted_text_cb(widget, pos, addtext, number):
+        """ Callback for text insert in search entry:
+        
+        Parameters
+        ----------
+        widget: GtkEntry or GtkSearchEntry
+        pos: int
+             position of the inserted characters
+        addtext: str
+                 added characters
+        num: int
+             number of added characters
+        """
+        pass
+    
+    def search_buffer_deleted_text_cb(widget, pos, num):
+        """ Callback for text insert in search entry:
+        
+        Parameters
+        ----------
+        widget: GtkEntry or GtkSearchEntry
+        pos: int
+             position of the deleted characters
+        num: int
+             number of deleted characters
+        """
+        pass
+
+
+def main(db):
+    builder = Gtk.Builder()
+    builder.add_from_file("notebook.glade")
+    builder.connect_signals(Handler())
+    
+    window = builder.get_object("main_window")
+    window.show_all()
+
+    Gtk.main()
