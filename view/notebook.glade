@@ -41,8 +41,12 @@
       <column type="gchararray"/>
     </columns>
   </object>
+  <object class="GtkAccelGroup" id="menu_accelgroup"/>
   <object class="GtkWindow" id="main_window">
     <property name="can_focus">False</property>
+    <accel-groups>
+      <group name="menu_accelgroup"/>
+    </accel-groups>
     <signal name="delete-event" handler="on_main_window_delete_event" swapped="no"/>
     <child>
       <object class="GtkGrid" id="grid">
@@ -70,8 +74,8 @@
                         <property name="related_action">new_note</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="use_underline">True</property>
                         <property name="use_stock">True</property>
+                        <accelerator key="n" signal="activate" modifiers="GDK_CONTROL_MASK"/>
                       </object>
                     </child>
                     <child>
@@ -94,6 +98,7 @@
                         <property name="can_focus">False</property>
                         <property name="use_underline">True</property>
                         <property name="use_stock">True</property>
+                        <accelerator key="Delete" signal="activate" modifiers="GDK_SHIFT_MASK"/>
                       </object>
                     </child>
                     <child>
@@ -109,6 +114,7 @@
                         <property name="can_focus">False</property>
                         <property name="use_underline">True</property>
                         <property name="use_stock">True</property>
+                        <accelerator key="q" signal="activate" modifiers="GDK_CONTROL_MASK"/>
                       </object>
                     </child>
                   </object>
@@ -224,7 +230,6 @@
       </object>
     </child>
   </object>
-  <object class="GtkAccelGroup" id="menu_accelgroup"/>
   <object class="GtkEntryBuffer" id="search_buffer">
     <signal name="deleted-text" handler="search_buffer_deleted_text_cb" swapped="no"/>
     <signal name="inserted-text" handler="search_buffer_inserted_text_cb" swapped="no"/>
