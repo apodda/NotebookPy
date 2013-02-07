@@ -2,6 +2,7 @@
 <interface>
   <!-- interface-requires gtk+ 3.0 -->
   <object class="GtkActionGroup" id="action_group">
+    <property name="accel_group">menu_accelgroup</property>
     <child>
       <object class="GtkAction" id="new_note">
         <property name="label" translatable="yes">New Note</property>
@@ -223,6 +224,7 @@
       </object>
     </child>
   </object>
+  <object class="GtkAccelGroup" id="menu_accelgroup"/>
   <object class="GtkEntryBuffer" id="search_buffer">
     <signal name="deleted-text" handler="search_buffer_deleted_text_cb" swapped="no"/>
     <signal name="inserted-text" handler="search_buffer_inserted_text_cb" swapped="no"/>
