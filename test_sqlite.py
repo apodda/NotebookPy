@@ -1,7 +1,7 @@
 import pytest
 from store.sqlite import SqliteStore, ReadError
 from utils import parse_title
-from uuid import uuid4
+from random import randint
 
 @pytest.fixture
 def notes():
@@ -28,14 +28,15 @@ def test_empty_query(db, notes):
 
 def test_nonempty_text_query(db, notes):
     data = [db.add_note(note) for note in notes]
+    assert data != None
     for _, uid in data:
         assert db.get_text(uid) != ''
 
-def test_wrong_uid_exception(db, notes):
+def test_wrong_id_exception(db, notes):
     for note in notes:
         db.add_note(note)
     with pytest.raises(ReadError):
-        db.get_text(str(uuid4()))
+        db.get_text(randint(1,100000))
 
 def test_lorem_query(db, notes):
     for note in notes:

@@ -38,7 +38,7 @@
       <!-- column-name Title -->
       <column type="gchararray"/>
       <!-- column-name uid -->
-      <column type="gchararray"/>
+      <column type="guint64"/>
     </columns>
   </object>
   <object class="GtkAccelGroup" id="menu_accelgroup"/>
@@ -74,6 +74,7 @@
                         <property name="related_action">new_note</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
+                        <property name="use_underline">True</property>
                         <property name="use_stock">True</property>
                         <accelerator key="n" signal="activate" modifiers="GDK_CONTROL_MASK"/>
                       </object>
