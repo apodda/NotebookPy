@@ -3,7 +3,8 @@ import sqlite3
 from utils import parse_title
 from store.store import *
 
-class SqliteStore(Store): # FIXME make sure changes are committed to disk (implement commit)
+# FIXME make sure changes are committed to disk (implement commit)
+class SqliteStore(Store): 
     def __init__(self, path):
         """Costructor, takes path to an existing database. If it doesn't exist,
            sqlite will create it for us. Will create a table called 'notes' if

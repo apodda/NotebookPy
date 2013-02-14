@@ -71,7 +71,7 @@ class SqliteStore(Store):
         self.db.commit()
 
     def get_text(self, rowid):
-        """Returns the text of a note given the Urowids
+        """Returns the text of a note given the rowids
         
         Parameters
         ----------
