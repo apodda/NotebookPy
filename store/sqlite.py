@@ -1,16 +1,10 @@
 import sqlite3
+
 from utils import parse_title
+from store.store import *
 
-class WriteError(RuntimeError):
-    pass
-
-class ReadError(RuntimeError):
-    pass
-
-class StoreError(RuntimeError):
-    pass
-
-class SqliteStore(): # FIXME make sure changes are committed
+# FIXME make sure changes are committed to disk (implement commit)
+class SqliteStore(Store): 
     def __init__(self, path):
         """Costructor, takes path to an existing database. If it doesn't exist,
            sqlite will create it for us. Will create a table called 'notes' if
@@ -33,8 +27,12 @@ class SqliteStore(): # FIXME make sure changes are committed
         # If we declare it AUTOINCREMENT, it will also ensure that the same rowid
         # will not be reused (ie, the selection algorithm for IDs is guaranteed
         # to be monotonically increasing)
-        self.db.execute("CREATE VIRTUAL TABLE IF NOT EXISTS notes USING fts4(title, body, id INTEGER PRIMARY KEY)")
-
+        self.db.execute("CREATE VIRTUAL TABLE IF NOT EXISTS notes "
+                        "USING fts4("
+                        "title, "
+                        "body, "
+                        "id INTEGER PRIMARY KEY"
+                        ")")
         
     def update_note(self, text, rowid):
         """Update note based on rowid. Parses title from text.
@@ -68,6 +66,9 @@ class SqliteStore(): # FIXME make sure changes are committed
         else:
             return [[title, rowid] for title, rowid 
                 in self.db.execute("SELECT title, rowid FROM notes")]
+
+    def commit(self):
+        self.db.commit()
 
     def get_text(self, rowid):
         """Returns the text of a note given the Urowids

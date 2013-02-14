@@ -1,5 +1,6 @@
 import pytest
-from store.sqlite import SqliteStore, ReadError
+from store.store import ReadError
+from store.sqlite import SqliteStore
 from utils import parse_title
 from random import randint
 
@@ -36,7 +37,7 @@ def test_wrong_id_exception(db, notes):
     for note in notes:
         db.add_note(note)
     with pytest.raises(ReadError):
-        db.get_text(randint(1,100000))
+        db.get_text(randint(5,1000000))
 
 def test_lorem_query(db, notes):
     for note in notes:
