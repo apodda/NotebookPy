@@ -4,6 +4,7 @@ from os.path import isdir, exists
 from tempfile import TemporaryFile as TmpFile
 from tempfile import TemporaryDirectory as TmpDir
 from random import randint
+from time import sleep
 
 from utils import parse_title
 from store.fs import FSStore
@@ -40,7 +41,44 @@ def test_notes_in_db(non_empty_db):
     assert db.query('') != []
     assert db.query('Lorem') is not None
     assert db.query('Lorem') != []
+
+#def test_update_files(non_empty_db):
+#    db, tmp = non_empty_db
+#    db.update_note('Minivan\nMinivan', 1) # Sqlite rowids begin from 1 unless you say otherwise
+#    db.commit()
+#    sleep(1)
+#    assert exists(pjoin(tmp.name, 'Minivan.txt'))
+
+# Check if file on disk are updated/deleted on commit 
+def test_files(db):
+    db, tmp = db
+    uid = db.add_note('Minivan')
+    db.commit()
+    sleep(1)
+    assert exists(pjoin(tmp.name, 'Minivan.txt'))
+    with open(pjoin(tmp.name, 'Minivan.txt'), 'r') as f:
+        assert f.read() == 'Minivan'
     
+    db.update_note('Minibus', uid)
+    db.commit()
+    sleep(1)
+    assert exists(pjoin(tmp.name, 'Minibus.txt'))
+    with open(pjoin(tmp.name, 'Minibus.txt'), 'r') as f: 
+        assert f.read() == 'Minibus'
+    
+    db.delete_note(uid)
+    assert not exists(pjoin(tmp.name, 'Minibus.txt'))
+
+# Check if the list of edited notes is update on note change
+def test_wal(db):
+    db, tmp = db
+    uid = db.add_note('Minivan')
+    assert [x for x in db.db.execute('select * from wal')] != []
+    db.commit()
+    assert [x for x in db.db.execute('select * from wal')] == []
+    db.update_note('Minibus', uid)
+    assert [x for x in db.db.execute('select * from wal')] != []
+
 def test_wrong_id_exception(db):
     db, tmp = db
     with pytest.raises(ReadError):
