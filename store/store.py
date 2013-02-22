@@ -7,24 +7,42 @@ class ReadError(RuntimeError):
 class StoreError(RuntimeError):
     pass
     
-class Store():
-    def update_note(self, text, uid):
+class Store():    
+    def add(self, title):
         pass
-    
+
+#    def commit(self):
+#        pass
+        
+    def delete(self):
+        # Delete *selected* note
+        pass
+        
+    def get(self):
+        # Gets *selected* note text
+        pass
+        
+#    def mass_update(self, ???):
+#        pass
+        
     def query(self, text):
         pass
-    
-    def commit(self):
-        pass
-    
-    def get_text(self, uid):
+
+    def rename(self, newtitle):
+        # Renames *selected* note to newtitle
         pass
         
-    def add_note(self, text):
+    def select(self, uid):
         pass
-        
-    def add_notes(self, text):
+
+    def tag(self, tag):
+        # Tags *selected* note
         pass
     
-    def delete_note(self, uid):
+    def unselect(self):
         pass
+        
+    def update(self, text):
+        # Updates *selected* note
+        pass
+

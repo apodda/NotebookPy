@@ -67,6 +67,8 @@ def test_files(db):
         assert f.read() == 'Minibus'
     
     db.delete_note(uid)
+    db.commit()
+    sleep(1)
     assert not exists(pjoin(tmp.name, 'Minibus.txt'))
 
 # Check if the list of edited notes is update on note change
