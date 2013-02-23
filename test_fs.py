@@ -42,48 +42,60 @@ def test_notes_in_db(non_empty_db):
     assert db.query('Lorem') is not None
     assert db.query('Lorem') != []
 
-#def test_update_files(non_empty_db):
-#    db, tmp = non_empty_db
-#    db.update_note('Minivan\nMinivan', 1) # Sqlite rowids begin from 1 unless you say otherwise
-#    db.commit()
-#    sleep(1)
-#    assert exists(pjoin(tmp.name, 'Minivan.txt'))
-
-# Check if file on disk are updated/deleted on commit 
+# Check if file on disk are updated/deleted on add/rename/delete/etc
 def test_files(db):
     db, tmp = db
-    uid = db.add_note('Minivan')
-    db.commit()
+    uid = db.add('Minivan')
+    db.select(uid)
     sleep(1)
+    
     assert exists(pjoin(tmp.name, 'Minivan.txt'))
     with open(pjoin(tmp.name, 'Minivan.txt'), 'r') as f:
-        assert f.read() == 'Minivan'
+        assert f.read() == ''
     
-    db.update_note('Minibus', uid)
-    db.commit()
+    db.update('Minibus')
     sleep(1)
-    assert exists(pjoin(tmp.name, 'Minibus.txt'))
-    with open(pjoin(tmp.name, 'Minibus.txt'), 'r') as f: 
+    with open(pjoin(tmp.name, 'Minivan.txt'), 'r') as f: 
         assert f.read() == 'Minibus'
     
-    db.delete_note(uid)
-    db.commit()
+    
+    db.rename('Macrobus')
     sleep(1)
-    assert not exists(pjoin(tmp.name, 'Minibus.txt'))
+    assert not exists(pjoin(tmp.name, 'Minivan.txt'))
+    assert exists(pjoin(tmp.name, 'Macrobus.txt'))
+        
+    db.delete()
+    #db.commit()
+    sleep(1)
+    assert not exists(pjoin(tmp.name, 'Macrobus.txt'))
 
-# Check if the list of edited notes is update on note change
-def test_wal(db):
+# Check if the db is updated on add/rename/delete/etc
+def test_files(db):
     db, tmp = db
-    uid = db.add_note('Minivan')
-    assert [x for x in db.db.execute('select * from wal')] != []
-    db.commit()
-    assert [x for x in db.db.execute('select * from wal')] == []
-    db.update_note('Minibus', uid)
-    assert [x for x in db.db.execute('select * from wal')] != []
+    uid = db.add('Minivan')
+    db.select(uid) 
+    assert 'Minivan' in [row["title"] for row in db.db.execute("select title from notes")]
+    assert 'Minivan' in db.query('')[0]
+    
+    db.update('Minibus')
+    assert 'Minibus' in [row["text"] for row in db.db.execute("select text from notes")]
+    assert 'Minivan' in db.query('')[0]
+    assert 'Minibus' in db.get()
+
+    db.rename('Macrobus')
+    assert 'Macrobus' in [row["title"] for row in db.db.execute("select title from notes")]
+    assert 'Macrobus' in db.query('')[0]
+
+    db.delete()
+    assert [] == [row["title"] for row in db.db.execute("select title from notes")]
+    assert [] == db.query('')
 
 def test_wrong_id_exception(db):
     db, tmp = db
+    uid = db.add('Minivan')
+    db.select(uid)
     with pytest.raises(ReadError):
-        db.get_text(randint(5,100000))
-        db.get_text(randint(5,100000))
-        db.get_text(randint(5,100000))
+        db.select(randint(5,100000))
+        db.select(randint(5,100000))
+        db.select(randint(5,100000))
+    assert db.current_note["id"] == uid

@@ -6,7 +6,10 @@ class ReadError(RuntimeError):
 
 class StoreError(RuntimeError):
     pass
-    
+
+class NoNoteSelectedError(RuntimeError):
+    pass
+
 class Store():    
     def add(self, title):
         pass

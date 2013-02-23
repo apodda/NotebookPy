@@ -28,7 +28,7 @@ class FSStore(Store):
             self.db.row_factory = sqlite3.Row
             self.db.execute("CREATE TABLE IF NOT EXISTS notes"
                     "("
-                    "id INTEGER PRIMARY KEY"
+                    "id INTEGER PRIMARY KEY, "
                     "title UNIQUE, " # This is used for filenames, so it should be unique
                     "text, "
                     "createdDate, "
@@ -40,8 +40,13 @@ class FSStore(Store):
                     text = f.read()
                     # FIXME Use executemany
                     # TODO handle creation date
-                    self.db.execute("INSERT INTO notes VALUES (?, ?, NULL, NULL)",
-                                    [basename, text])
+                    # From Sqlite docs:
+                    # If an INSERT statement attempts to insert a NULL value 
+                    # into a rowid or integer primary key column, the system 
+                    # chooses an integer value to use as the rowid 
+                    # automatically.
+                    self.db.execute("INSERT INTO notes VALUES (NULL, ?, ?, NULL, NULL)",
+                                    [basename(fn), text])
         else:
             # TODO Handle existing db
             pass
@@ -51,7 +56,11 @@ class FSStore(Store):
         # FIXME If id doesn't exist?
         cur = self.db.execute("SELECT title FROM notes WHERE id=?",
                                   [uid])
-        title = cur.fetchone()[0]
+        t = cur.fetchone()
+        if t is not None:
+            return t[0]
+        else:
+            raise ReadError("No note with such id: " + str(uid))
 
     def _get_current_note_filename(self):
         # TODO as below
@@ -65,10 +74,10 @@ class FSStore(Store):
         # TODO Rewrite this in EAFP-style http://docs.python.org/2/glossary.html#term-eafp
         # which basically means, as a try..except
         if self.current_note["file"] is None:
-            self.current_note["file"] = open(_get_current_note_filename(), 'w')
+            self.current_note["file"] = open(self._get_current_note_filename(), 'w')
 
     def add(self, title):
-        fn = pjoin(path, title + '.txt')
+        fn = pjoin(self.path, title + '.txt')
         if exists(fn):
             raise WriteError('FATAL ERROR: File ' + title + '.txt already exists!')
         else:
@@ -77,15 +86,17 @@ class FSStore(Store):
             # Create an empty file with the right title
             open(fn, 'w').close()
 
-            self.db.execute("INSERT INTO notes VALUES (?, ?, NULL, NULL)", [title, ''])
+            self.db.execute("INSERT INTO notes VALUES (NULL, ?, ?, NULL, NULL)", [title, ''])
             cur = self.db.execute("SELECT last_insert_rowid();")
             rowid = cur.fetchone()[0]
-            return title, rowid
+            return rowid
 
     def delete(self):
+        filename = self._get_current_note_filename()
         self.db.execute("DELETE FROM notes WHERE id=?",
                         [self.current_note["id"]])
-        unlink(self._get_current_note_filename())
+        unlink(filename)
+        self.unselect()
 
     def get(self):
         cur = self.db.execute("SELECT title, text FROM notes WHERE id=?",
@@ -99,21 +110,27 @@ class FSStore(Store):
     def query(self, text):
         # TODO, handle tags, modification and creation date, limit number of
         # returned notes (via SQL limit)
-        if query != '':
+        if text != '':
             return [[title, rowid] for title, rowid # cursor.execute expects a list!
                 in self.db.execute("SELECT title, rowid FROM notes"
-                                   " WHERE body MATCH ?", [query])]
+                                    # We must add the sqlite wildcards to the
+                                    # string before we pass it to execute()
+                                   " WHERE text LIKE ?", ['%' + text + '%'])]
         else:
             return [[title, rowid] for title, rowid
                 in self.db.execute("SELECT title, rowid FROM notes")]
 
     def rename(self, newtitle):
-        frename(self._get_current_note_filename,
+        if self.current_note["id"] is None:
+            raise WriteError("Can't rename. No note has been selected")
+        frename(self._get_current_note_filename(),
                 pjoin(self.path, newtitle + '.txt'))
+        self.db.execute("UPDATE notes SET title=? WHERE id=?",
+                        [newtitle, self.current_note["id"]])
 
     def select(self, uid):
+        self._get_title_from_id(uid) # Raises an exception if uid is not in db
         self.unselect()
-        # TODO check if uid exists!
         self.current_note['id'] = uid
         self._ensure_current_note_is_writable()
 
@@ -127,13 +144,14 @@ class FSStore(Store):
             raise StoreError('No note has been selected')
         else:
             self.db.execute("UPDATE notes SET text=? WHERE id=?",
-                            [text, self.current_note])
+                            [text, self.current_note["id"]])
             self._ensure_current_note_is_writable()
             self.current_note['file'].write(text)
             self.current_note['file'].seek(0)
 
     def unselect(self):
         self.current_note["id"] = None
-        self.current_note["file"].close()
-        self.current_note["file"] = None
+        if self.current_note["file"] is not None:
+            self.current_note["file"].close()
+            self.current_note["file"] = None
 
